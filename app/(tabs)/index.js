@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function UptimeScreen() {
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,11 @@ export default function UptimeScreen() {
   }, []);
 
   async function testarAlertaCritico() {
+    if (Platform.OS === 'web') {
+      Alert.alert('Notificações Indisponíveis', 'Notificações funcionam apenas em dispositivos móveis (iOS/Android). Use Expo Go no celular.');
+      return;
+    }
+    
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🚨 ALERTA CRÍTICO',
