@@ -1,6 +1,7 @@
+import * as Notifications from 'expo-notifications';
 import { usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function UptimeScreen() {
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,18 @@ export default function UptimeScreen() {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  async function testarAlertaCritico() {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '🚨 ALERTA CRÍTICO',
+        body: 'Falha de conectividade detectada no servidor principal.',
+      },
+      trigger: {
+        seconds: 3,
+      },
+    });
+  }
+
   const renderItem = ({ item }) => {
     const isOperational = item.status === 'Operacional';
 
@@ -66,6 +79,9 @@ export default function UptimeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Status dos Sistemas Críticos</Text>
+      <Pressable onPress={testarAlertaCritico} style={styles.alertButton}>
+        <Text style={styles.alertButtonText}>Testar Alerta Crítico (Pager)</Text>
+      </Pressable>
       <FlatList
         data={servicos}
         keyExtractor={(item) => item.id}
@@ -104,6 +120,18 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 16,
+  },
+  alertButton: {
+    backgroundColor: '#ED145B',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  alertButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   card: {
     backgroundColor: '#1E1E1E',

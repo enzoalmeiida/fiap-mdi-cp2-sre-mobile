@@ -1,6 +1,15 @@
+import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function NavigationGuard() {
   const router = useRouter();
@@ -53,6 +62,18 @@ function NavigationGuard() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    async function configureNotifications() {
+      const permissions = await Notifications.getPermissionsAsync();
+
+      if (permissions.status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+    }
+
+    void configureNotifications();
+  }, []);
+
   return (
     <AuthProvider>
       <NavigationGuard />

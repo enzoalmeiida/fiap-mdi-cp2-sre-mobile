@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,15 +10,16 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  Image,
   View,
 } from 'react-native';
 
 const INCIDENTS_KEY = '@fiap-status:incidents';
 
 const INITIAL_INCIDENTS = [
-  { id: 'INC-1001', titulo: 'Latencia alta no portal academico', status: 'Aberto' },
-  { id: 'INC-1002', titulo: 'Perda intermitente de conexao Wi-Fi', status: 'Aberto' },
-  { id: 'INC-1003', titulo: 'Leitor de catraca sem resposta', status: 'Aberto' },
+  { id: 'INC-1001', titulo: 'Latencia alta no portal academico', gravidade: 'Alta', status: 'Aberto' },
+  { id: 'INC-1002', titulo: 'Perda intermitente de conexao Wi-Fi', gravidade: 'Media', status: 'Aberto' },
+  { id: 'INC-1003', titulo: 'Leitor de catraca sem resposta', gravidade: 'Critica', status: 'Aberto' },
 ];
 
 function triggerSuccessFeedback() {
@@ -29,6 +31,8 @@ export default function IncidentesScreen() {
   const [hydrated, setHydrated] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [incidentes, setIncidentes] = useState(INITIAL_INCIDENTS);
+  const [novoIncidente, setNovoIncidente] = useState({ titulo: '', gravidade: 'Alta' });
+  const [evidenceUri, setEvidenceUri] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -99,6 +103,44 @@ export default function IncidentesScreen() {
     await triggerSuccessFeedback();
   }
 
+  async function anexarEvidencia(source) {
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 0.8,
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 0.8,
+          });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setEvidenceUri(result.assets[0].uri);
+    }
+  }
+
+  async function salvarIncidente() {
+    if (!novoIncidente.titulo.trim()) {
+      return;
+    }
+
+    const item = {
+      id: `INC-${Date.now()}`,
+      titulo: novoIncidente.titulo.trim(),
+      gravidade: novoIncidente.gravidade,
+      status: 'Aberto',
+      evidenceUri,
+    };
+
+    setIncidentes((current) => [item, ...current]);
+    setNovoIncidente({ titulo: '', gravidade: 'Alta' });
+    setEvidenceUri('');
+    await triggerSuccessFeedback();
+  }
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -124,6 +166,39 @@ export default function IncidentesScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Incidentes Abertos</Text>
 
+      <View style={styles.formCard}>
+        <Text style={styles.formLabel}>Novo incidente</Text>
+        <TextInput
+          placeholder="Título do incidente"
+          placeholderTextColor="#6B7280"
+          value={novoIncidente.titulo}
+          onChangeText={(text) => setNovoIncidente((current) => ({ ...current, titulo: text }))}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Gravidade"
+          placeholderTextColor="#6B7280"
+          value={novoIncidente.gravidade}
+          onChangeText={(text) => setNovoIncidente((current) => ({ ...current, gravidade: text }))}
+          style={styles.input}
+        />
+
+        <View style={styles.evidenceRow}>
+          <Pressable onPress={() => anexarEvidencia('camera')} style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Anexar Evidência (Foto)</Text>
+          </Pressable>
+          <Pressable onPress={() => anexarEvidencia('library')} style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Galeria</Text>
+          </Pressable>
+        </View>
+
+        {!!evidenceUri && <Image source={{ uri: evidenceUri }} style={styles.previewImage} />}
+
+        <Pressable onPress={salvarIncidente} style={styles.primaryButton}>
+          <Text style={styles.primaryButtonText}>Salvar incidente</Text>
+        </Pressable>
+      </View>
+
       <TextInput
         autoCapitalize="none"
         autoCorrect={false}
@@ -143,8 +218,10 @@ export default function IncidentesScreen() {
 
           return (
             <View style={styles.card}>
+              {!!item.evidenceUri && <Image source={{ uri: item.evidenceUri }} style={styles.cardImage} />}
               <Text style={styles.id}>{item.id}</Text>
               <Text style={styles.titulo}>{item.titulo}</Text>
+              <Text style={styles.gravidade}>Gravidade: {item.gravidade}</Text>
               <Text style={[styles.status, recognized ? styles.statusReconhecido : styles.statusAberto]}>
                 {item.status}
               </Text>
@@ -263,6 +340,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 8,
   },
+  gravidade: {
+    color: '#B8B8B8',
+    marginBottom: 8,
+    fontSize: 13,
+  },
   status: {
     fontWeight: '700',
     marginBottom: 10,
@@ -322,5 +404,68 @@ const styles = StyleSheet.create({
     color: '#B8B8B8',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  formCard: {
+    backgroundColor: '#1E1E1E',
+    borderColor: '#334155',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+  },
+  formLabel: {
+    color: '#F5F5F5',
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  input: {
+    backgroundColor: '#121212',
+    borderColor: '#334155',
+    borderWidth: 1,
+    borderRadius: 12,
+    color: '#F5F5F5',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  evidenceRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  secondaryButton: {
+    flex: 1,
+    borderColor: '#ED145B',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#ED145B',
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#ED145B',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  previewImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  cardImage: {
+    width: '100%',
+    height: 140,
+    borderRadius: 10,
+    marginBottom: 10,
   },
 });

@@ -3,8 +3,9 @@ import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
-const SESSION_KEY = '@fiap-status:session';
-const USER_KEY = '@fiap-status:registered-user';
+const SESSION_KEY = 'fiap_status_session';
+const USER_KEY = 'fiap_status_registered_user';
+const SESSION_FALLBACK_KEY = 'fiap_status_session_fallback';
 
 const AuthContext = createContext(null);
 
@@ -14,6 +15,56 @@ function normalizeEmail(email) {
 
 function createSessionToken() {
   return `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function isSecureStoreAvailable() {
+  try {
+    if (typeof SecureStore.isAvailableAsync !== 'function') {
+      return false;
+    }
+
+    return await SecureStore.isAvailableAsync();
+  } catch {
+    return false;
+  }
+}
+
+async function readSessionValue() {
+  if (await isSecureStoreAvailable()) {
+    try {
+      return await SecureStore.getItemAsync(SESSION_KEY);
+    } catch {
+      // Fall back below.
+    }
+  }
+
+  return AsyncStorage.getItem(SESSION_FALLBACK_KEY);
+}
+
+async function writeSessionValue(value) {
+  if (await isSecureStoreAvailable()) {
+    try {
+      await SecureStore.setItemAsync(SESSION_KEY, value);
+      await AsyncStorage.removeItem(SESSION_FALLBACK_KEY);
+      return;
+    } catch {
+      // Fall back below.
+    }
+  }
+
+  await AsyncStorage.setItem(SESSION_FALLBACK_KEY, value);
+}
+
+async function deleteSessionValue() {
+  if (await isSecureStoreAvailable()) {
+    try {
+      await SecureStore.deleteItemAsync(SESSION_KEY);
+    } catch {
+      // Ignore and clear fallback below.
+    }
+  }
+
+  await AsyncStorage.removeItem(SESSION_FALLBACK_KEY);
 }
 
 export function AuthProvider({ children }) {
@@ -28,7 +79,7 @@ export function AuthProvider({ children }) {
     async function restoreSession() {
       try {
         const [storedSession, storedUser] = await Promise.all([
-          SecureStore.getItemAsync(SESSION_KEY),
+          readSessionValue(),
           AsyncStorage.getItem(USER_KEY),
         ]);
 
@@ -46,9 +97,9 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        await SecureStore.deleteItemAsync(SESSION_KEY);
+        await deleteSessionValue();
       } catch {
-        await SecureStore.deleteItemAsync(SESSION_KEY);
+        await deleteSessionValue();
       } finally {
         if (isMounted) {
           setIsHydrating(false);
@@ -76,10 +127,7 @@ export function AuthProvider({ children }) {
   const persistSession = async (account) => {
     const token = createSessionToken();
 
-    await SecureStore.setItemAsync(
-      SESSION_KEY,
-      JSON.stringify({ token, email: account.email }),
-    );
+    await writeSessionValue(JSON.stringify({ token, email: account.email }));
 
     setUser(account);
     setSessionToken(token);
@@ -124,7 +172,7 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
-    await SecureStore.deleteItemAsync(SESSION_KEY);
+    await deleteSessionValue();
     setUser(null);
     setSessionToken(null);
     setIsBiometricVerified(false);
