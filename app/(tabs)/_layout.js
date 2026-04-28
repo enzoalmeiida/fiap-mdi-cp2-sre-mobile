@@ -29,12 +29,15 @@ export default function TabsLayout() {
         tabBarIcon: ({ color, size }) => {
           let iconName = 'ellipse';
 
+          // Definindo os ícones baseados no nome da rota
           if (route.name === 'index') {
             iconName = 'pulse-outline';
           } else if (route.name === 'datacenter') {
             iconName = 'server-outline';
           } else if (route.name === 'incidentes') {
             iconName = 'alert-circle-outline';
+          } else if (route.name === 'perfil') {
+            iconName = 'person-circle-outline'; // Ícone para a aba de Perfil
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -57,6 +60,13 @@ export default function TabsLayout() {
         name="incidentes"
         options={{
           title: 'Incidentes',
+        }}
+      />
+      {/* Adicionando a nova tela de perfil (Logout) na barra inferior */}
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: 'Perfil',
         }}
       />
     </Tabs>

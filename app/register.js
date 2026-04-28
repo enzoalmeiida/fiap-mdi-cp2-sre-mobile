@@ -19,6 +19,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
+  const [name, setName] = useState(''); // Novo campo obrigatório
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,12 +27,20 @@ export default function RegisterScreen() {
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const nameError = useMemo(() => errors.name || '', [errors.name]);
   const emailError = useMemo(() => errors.email || '', [errors.email]);
   const passwordError = useMemo(() => errors.password || '', [errors.password]);
   const confirmPasswordError = useMemo(() => errors.confirmPassword || '', [errors.confirmPassword]);
 
+  // Regra CP2: O botão não funciona se houver campos vazios
+  const isButtonDisabled = isSubmitting || !name.trim() || !email.trim() || !password || !confirmPassword;
+
   function validateForm() {
     const nextErrors = {};
+
+    if (!name.trim()) {
+      nextErrors.name = 'O nome completo é obrigatório.';
+    }
 
     if (!EMAIL_PATTERN.test(email.trim())) {
       nextErrors.email = 'Informe um e-mail válido.';
@@ -58,7 +67,8 @@ export default function RegisterScreen() {
 
     try {
       setIsSubmitting(true);
-      const result = await register({ email, password });
+      // Passando o name também para o contexto
+      const result = await register({ name, email, password });
 
       if (!result.success) {
         setFormError(result.message || 'Falha ao criar a conta.');
@@ -83,6 +93,24 @@ export default function RegisterScreen() {
           <Text style={styles.subtitle}>
             Cadastre o acesso local do app para liberar o ambiente de operação.
           </Text>
+
+          {/* NOVO CAMPO: NOME COMPLETO */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Nome Completo</Text>
+            <TextInput
+              autoCapitalize="words"
+              placeholder="Seu nome completo"
+              placeholderTextColor="#6B7280"
+              style={[styles.input, nameError ? styles.inputError : null]}
+              value={name}
+              onChangeText={(text) => {
+                setName(text);
+                if (nameError) setErrors((current) => ({ ...current, name: '' }));
+                if (formError) setFormError('');
+              }}
+            />
+            {!!nameError && <Text style={styles.errorText}>{nameError}</Text>}
+          </View>
 
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>E-mail</Text>
@@ -151,7 +179,11 @@ export default function RegisterScreen() {
 
           {!!formError && <Text style={styles.errorText}>{formError}</Text>}
 
-          <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={isSubmitting}>
+          <Pressable 
+            onPress={handleSubmit} 
+            style={[styles.primaryButton, isButtonDisabled && styles.buttonDisabled]} 
+            disabled={isButtonDisabled}
+          >
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
@@ -169,80 +201,19 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  card: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ED145B',
-    padding: 24,
-  },
-  title: {
-    marginTop: 16,
-    color: '#F5F5F5',
-    fontSize: 24,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  subtitle: {
-    marginTop: 10,
-    marginBottom: 24,
-    color: '#B8B8B8',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    marginBottom: 8,
-    color: '#F5F5F5',
-    fontWeight: '700',
-  },
-  input: {
-    backgroundColor: '#121212',
-    borderColor: '#334155',
-    borderWidth: 1,
-    borderRadius: 12,
-    color: '#F5F5F5',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  inputError: {
-    borderColor: '#EF4444',
-  },
-  errorText: {
-    marginTop: 6,
-    color: '#EF4444',
-    fontSize: 13,
-  },
-  primaryButton: {
-    backgroundColor: '#ED145B',
-    borderRadius: 12,
-    minHeight: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-  secondaryButton: {
-    marginTop: 12,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  secondaryButtonText: {
-    color: '#ED145B',
-    fontWeight: '700',
-  },
+  container: { flex: 1, backgroundColor: '#121212' },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  card: { backgroundColor: '#1E1E1E', borderRadius: 20, borderWidth: 1, borderColor: '#ED145B', padding: 24 },
+  title: { marginTop: 16, color: '#F5F5F5', fontSize: 24, fontWeight: '800', textAlign: 'center' },
+  subtitle: { marginTop: 10, marginBottom: 24, color: '#B8B8B8', textAlign: 'center', lineHeight: 20 },
+  fieldGroup: { marginBottom: 16 },
+  label: { marginBottom: 8, color: '#F5F5F5', fontWeight: '700' },
+  input: { backgroundColor: '#121212', borderColor: '#334155', borderWidth: 1, borderRadius: 12, color: '#F5F5F5', paddingHorizontal: 14, paddingVertical: 12 },
+  inputError: { borderColor: '#EF4444' },
+  errorText: { marginTop: 6, color: '#EF4444', fontSize: 13 },
+  primaryButton: { backgroundColor: '#ED145B', borderRadius: 12, minHeight: 48, justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  buttonDisabled: { backgroundColor: '#555555', opacity: 0.7 }, // Estilo do botão desativado
+  primaryButtonText: { color: '#FFFFFF', fontWeight: '800' },
+  secondaryButton: { marginTop: 12, alignItems: 'center', paddingVertical: 8 },
+  secondaryButtonText: { color: '#ED145B', fontWeight: '700' },
 });

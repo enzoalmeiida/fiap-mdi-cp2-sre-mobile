@@ -28,6 +28,9 @@ export default function LoginScreen() {
   const emailError = useMemo(() => errors.email || '', [errors.email]);
   const passwordError = useMemo(() => errors.password || '', [errors.password]);
 
+  // Regra CP2: O botão não funciona se houver campos vazios
+  const isButtonDisabled = isSubmitting || !email.trim() || !password;
+
   function validateForm() {
     const nextErrors = {};
 
@@ -122,7 +125,11 @@ export default function LoginScreen() {
 
           {!!formError && <Text style={styles.errorText}>{formError}</Text>}
 
-          <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={isSubmitting}>
+          <Pressable 
+            onPress={handleSubmit} 
+            style={[styles.primaryButton, isButtonDisabled && styles.buttonDisabled]} 
+            disabled={isButtonDisabled}
+          >
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
@@ -140,80 +147,19 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  card: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ED145B',
-    padding: 24,
-  },
-  title: {
-    marginTop: 16,
-    color: '#F5F5F5',
-    fontSize: 24,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  subtitle: {
-    marginTop: 10,
-    marginBottom: 24,
-    color: '#B8B8B8',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    marginBottom: 8,
-    color: '#F5F5F5',
-    fontWeight: '700',
-  },
-  input: {
-    backgroundColor: '#121212',
-    borderColor: '#334155',
-    borderWidth: 1,
-    borderRadius: 12,
-    color: '#F5F5F5',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  inputError: {
-    borderColor: '#EF4444',
-  },
-  errorText: {
-    marginTop: 6,
-    color: '#EF4444',
-    fontSize: 13,
-  },
-  primaryButton: {
-    backgroundColor: '#ED145B',
-    borderRadius: 12,
-    minHeight: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-  secondaryButton: {
-    marginTop: 12,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  secondaryButtonText: {
-    color: '#ED145B',
-    fontWeight: '700',
-  },
+  container: { flex: 1, backgroundColor: '#121212' },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  card: { backgroundColor: '#1E1E1E', borderRadius: 20, borderWidth: 1, borderColor: '#ED145B', padding: 24 },
+  title: { marginTop: 16, color: '#F5F5F5', fontSize: 24, fontWeight: '800', textAlign: 'center' },
+  subtitle: { marginTop: 10, marginBottom: 24, color: '#B8B8B8', textAlign: 'center', lineHeight: 20 },
+  fieldGroup: { marginBottom: 16 },
+  label: { marginBottom: 8, color: '#F5F5F5', fontWeight: '700' },
+  input: { backgroundColor: '#121212', borderColor: '#334155', borderWidth: 1, borderRadius: 12, color: '#F5F5F5', paddingHorizontal: 14, paddingVertical: 12 },
+  inputError: { borderColor: '#EF4444' },
+  errorText: { marginTop: 6, color: '#EF4444', fontSize: 13 },
+  primaryButton: { backgroundColor: '#ED145B', borderRadius: 12, minHeight: 48, justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  buttonDisabled: { backgroundColor: '#555555', opacity: 0.7 }, // Estilo do botão desativado
+  primaryButtonText: { color: '#FFFFFF', fontWeight: '800' },
+  secondaryButton: { marginTop: 12, alignItems: 'center', paddingVertical: 8 },
+  secondaryButtonText: { color: '#ED145B', fontWeight: '700' },
 });

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,9 @@ export default function BiometricScreen() {
   const [isChecking, setIsChecking] = useState(true);
   const [message, setMessage] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  
+  // Criamos uma referência para evitar que o React chame a biometria duas vezes seguidas
+  const hasTriggeredInitialAuth = useRef(false);
 
   const authenticate = useCallback(async () => {
     try {
@@ -54,7 +57,11 @@ export default function BiometricScreen() {
   }, [router, unlockWithBiometrics]);
 
   useEffect(() => {
-    void authenticate();
+    // Só chama a autenticação se ainda não tiver sido chamada nesta montagem
+    if (!hasTriggeredInitialAuth.current) {
+      hasTriggeredInitialAuth.current = true;
+      void authenticate();
+    }
   }, [authenticate]);
 
   async function handleSignOut() {
@@ -80,7 +87,11 @@ export default function BiometricScreen() {
 
         {!!message && <Text style={styles.errorText}>{message}</Text>}
 
-        <Pressable onPress={authenticate} style={styles.primaryButton}>
+        <Pressable 
+          onPress={authenticate} 
+          style={[styles.primaryButton, isAuthenticating && styles.disabledButton]}
+          disabled={isAuthenticating} // Evita flood de cliques
+        >
           <Text style={styles.primaryButtonText}>Tentar novamente</Text>
         </Pressable>
 
@@ -145,6 +156,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   primaryButtonText: {
     color: '#FFFFFF',

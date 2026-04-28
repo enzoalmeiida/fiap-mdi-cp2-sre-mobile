@@ -1,1 +1,1 @@
-export { default } from '../../app/(tabs)/IncidentesScreen';
+export { default } from '../../app/(tabs)/perfil';

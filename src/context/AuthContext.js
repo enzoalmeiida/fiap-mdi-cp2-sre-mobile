@@ -116,7 +116,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState !== 'active' && sessionToken) {
+      if (nextState === 'background' && sessionToken) {
         setIsBiometricVerified(false);
       }
     });
@@ -136,9 +136,11 @@ export function AuthProvider({ children }) {
     return { success: true };
   };
 
-  const register = async ({ email, password }) => {
+  // Ajuste: Recebendo o "name" que vem lá da tela de registro
+  const register = async ({ name, email, password }) => {
     const normalizedEmail = normalizeEmail(email);
     const account = {
+      name, // Salvando o nome no AsyncStorage
       email: normalizedEmail,
       password,
       createdAt: new Date().toISOString(),
