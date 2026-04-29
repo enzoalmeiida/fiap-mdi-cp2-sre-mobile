@@ -33,12 +33,13 @@ Aplicativo mobile desenvolvido com React Native, Expo e Expo Router para monitor
 
 ## b) Integrantes do Grupo
 
-- **Integrante 1:** [nome completo]
-  - **RM:** [RM]
-- **Integrante 2:** [nome completo]
-  - **RM:** [RM]
-- **Integrante 3:** [nome completo]
-  - **RM:** [RM]
+- Enzo Almeida Santos Ramos RM: 556900
+  
+- Gabriel de Mello Silva Fernandes RM: 554421
+
+- Guilherme Machado Moreira RM: 557290
+
+- Jose Antonio Kretzer Rodriguez RM: 555523
 
 ## c) Como Rodar o Projeto
 
