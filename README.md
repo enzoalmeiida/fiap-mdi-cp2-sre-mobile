@@ -31,7 +31,7 @@ Escolhemos o **Monitoramento e Gestão de Infraestrutura Campus/Datacenter**. A 
 
 1.  **Clone este repositório para a sua máquina:**
     ```bash
-    git clone [https://github.com/enzoalmeiida/fiap-mdi-cp1-sre-mobile.git](https://github.com/enzoalmeiida/fiap-mdi-cp1-sre-mobile.git)
+    git clone [https://github.com/enzoalmeiida/fiap-mdi-cp2-sre-mobile.git](https://github.com/enzoalmeiida/fiap-mdi-cp2-sre-mobile.git)
     ```
 2.  **Acesse o diretório do projeto:**
     ```bash
